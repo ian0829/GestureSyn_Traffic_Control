@@ -48,7 +48,7 @@ def ReadLabelFile(file_path):
 def DrawRectangles(request):
     with MappedArray(request, "main") as m:
         for rect in rectangles:
-            print(rect)
+            # print(rect)
             rect_start = (int(rect[0] * 2) - 5, int(rect[1] * 2) - 5)
             rect_end = (int(rect[2] * 2) + 5, int(rect[3] * 2) + 5)
             cv2.rectangle(m.array, rect_start, rect_end, (0, 255, 0, 0))
@@ -97,11 +97,14 @@ def InferenceTensorFlow(image, model, output, label=None):
     num_boxes = interpreter.get_tensor(output_details[3]['index'])
 
     rectangles = []
+    num_det_car = 0
     for i in range(int(num_boxes)):
         top, left, bottom, right = detected_boxes[0][i]
         classId = int(detected_classes[0][i])
         score = detected_scores[0][i]
-        if score > 0.5:
+        if score > 0.3:
+            if labels[classId] == 'car':
+                num_det_car += 1
             xmin = left * initial_w
             ymin = bottom * initial_h
             xmax = right * initial_w
@@ -109,10 +112,11 @@ def InferenceTensorFlow(image, model, output, label=None):
             box = [xmin, ymin, xmax, ymax]
             rectangles.append(box)
             if labels:
-                print(labels[classId], 'score = ', score)
+                # print(labels[classId], 'score = ', score)
                 rectangles[-1].append(labels[classId])
-            else:
-                print('score = ', score)
+            # else:
+            #     print('score = ', score)
+    print(f'Number of Cars detected: {num_det_car}')
 
 
 def main():
