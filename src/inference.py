@@ -5,6 +5,7 @@
 # Pi Camera Module V2
 #
 # python3 real_time_with_labels.py --model mobilenet_v2.tflite --label coco_labels.txt
+# python3 real_time_with_labels.py --model efficientdet_lite0.tflite --label coco_labels.txt
 
 import cv2
 import numpy as np
