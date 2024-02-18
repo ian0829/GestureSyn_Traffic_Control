@@ -18,6 +18,18 @@ normal_size = (640, 480)
 lowres_size = (320, 240)
 rectangles = []
 
+### RELAY the CAR count to STM module ###
+import serial
+import time
+def sent_car_count(car_count, ser):
+    data = ''
+    interm_data = ''    
+    
+    msg_str = str(car_count) + '\n'
+    # print(msg_str)
+    bytes_sent = ser.write( msg_str.encode('utf-8') )
+    print (f'Sended {bytes_sent} bytes')
+    
 
 def read_labels(file_path):
     with open(file_path, 'r') as f:
@@ -32,7 +44,7 @@ def read_labels(file_path):
 def DrawRectangles(request):
     with MappedArray(request, "main") as m:
         for rect in rectangles:
-            print(rect)
+            # print(rect)
             rect_start = (int(rect[0] * 2) - 5, int(rect[1] * 2) - 5)
             rect_end = (int(rect[2] * 2) + 5, int(rect[3] * 2) + 5)
             cv2.rectangle(m.array, rect_start, rect_end, (0, 255, 0, 0))
@@ -88,19 +100,20 @@ def inference_model(image, model, output, label=None):
         score = detected_scores[0][i]
         if score > 0.5:
             if labels[classId] == 'car':
-                num_det_car = 0
+                num_det_car += 1
             xmin = left * initial_w
             ymin = bottom * initial_h
             xmax = right * initial_w
             ymax = top * initial_h
             box = [xmin, ymin, xmax, ymax]
             rectangles.append(box)
-            if labels:
-                print(labels[classId], 'score = ', score)
-                rectangles[-1].append(labels[classId])
-            else:
-                print('score = ', score)
-    print(f'Number of Cars detected: {num_det_car}')
+            # if labels:
+            #     print(labels[classId], 'score = ', score)
+            #     rectangles[-1].append(labels[classId])
+            # else:
+            #     print('score = ', score)
+    # print(f'Number of Cars detected: {num_det_car}')
+    return num_det_car
 
 def main():
     parser = argparse.ArgumentParser()
@@ -129,12 +142,19 @@ def main():
     picam2.post_callback = DrawRectangles
 
     picam2.start()
+    
+    ### establish bluetooth serial port connection
+    ser = serial.Serial('/dev/rfcomm1', 9600)
+
 
     while True:
         buffer = picam2.capture_buffer("lores")
         grey = buffer[:stride * lowres_size[1]].reshape((lowres_size[1], stride))
-        _ = inference_model(grey, args.model, output_file, label_file)
-
+        num_det_car = inference_model(grey, args.model, output_file, label_file)
+        sent_car_count(num_det_car, ser)
+        # sent_car_count(num_det_car)
+        
+    
 
 if __name__ == '__main__':
     main()
