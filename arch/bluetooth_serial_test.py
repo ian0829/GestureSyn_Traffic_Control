@@ -1,15 +1,24 @@
 #! /usr/bin/python
 import serial
 from time import sleep
-bluetoothSerial = serial.Serial( "/dev/rfcomm1", baudrate=9600 )
+bluetoothSerial = serial.Serial( "/dev/rfcomm0", baudrate=9600 )
+
+#while True:
+#	bluetoothSerial.write("\r\nSay something: ")
+#	rcv = port.read(10)
+#	bluetoothSerial.write("\r\n ECHO: " + repr(rcv))
+
 count = None
 while count == None:
     try:
-        count = int(raw_input( "Please enter the number of times to blink the LED: "))
+        count = int(input( "Please enter the number of times to blink the LED: "))
     except:
         pass    # Ignore any errors that may occur and try again
-bluetoothSerial.write( str(count) )
-print bluetoothSerial.readline()
+
+
+bluetoothSerial.write(b'hello')
+print(count)
+print(bluetoothSerial.readline())
 
 
 #https://www.uugear.com/portfolio/bluetooth-communication-between-raspberry-pi-and-arduino/
