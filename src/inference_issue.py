@@ -34,35 +34,30 @@ def led_main(ser): # 1 - red # 2 - green
     print(f'\nStarting LED signal module....')
 
     signal_in = '2'
-    signal = 2
+    signal = '2'
     
     while True:
         # LISTEN for signal from STM
         if ser.inWaiting() > 0:
-            signal_in = ser.readline().decode().strip('\0')
-            print(f'\nLED: {signal}\n')
-            # if signal_in != signal:
-            #     signal = signal_in
-            signal = int(signal_in)
-        
+            signal_in = ser.readline().decode().strip()
+            if signal_in != signal:
+                signal = signal_in
+                # print(f'\nLED: {signal}\n')
         # UPDATE the LED lights
-        if(signal == 1):
+        if(signal == '1'):
             GREEN_LIGHT.off()
             YELLOW_LIGHT.on()
             time.sleep(2)
             YELLOW_LIGHT.off()
             RED_LIGHT.on()
-        elif(signal == 2):
-        # else:
-            # print(f'\nLED in Green\n')
+        elif(signal == '2'):
             RED_LIGHT.off()
             GREEN_LIGHT.on()
-            
-        # else:
-        #     signal = '1'
-        #     RED_LIGHT.off()
-        #     GREEN_LIGHT.off()  
-                # print(f'\nLED: {signal}\n')
+        else:
+            signal = '1'
+            RED_LIGHT.off()
+            GREEN_LIGHT.off()  
+        # print(f'\nLED: {signal}\n')
         
   
         
@@ -191,15 +186,17 @@ def det_main(ser):
         buffer = picam2.capture_buffer("lores")
         grey = buffer[:stride * lowres_size[1]].reshape((lowres_size[1], stride))
         
-
-        # print (f'\nCAR COUNT :    {num_det_car}')
+        # GET the current number of cars
+        num_det_car = inference_model(grey, args.model, output_file, label_file)
+        print (f'\nCAR COUNT :    {num_det_car}')
         
         # SEND the number of car count every three seconds
-        if (datetime.datetime.now() - start_time).seconds == 3 :
-            # GET the current number of cars
-            num_det_car = inference_model(grey, args.model, output_file, label_file)
+        if (datetime.datetime.now() - start_time).seconds == 2 :
             start_time = datetime.datetime.now()
             sent_car_count(num_det_car, ser)    
+            
+
+
 
 def main():
     ### ESTABLISH bluetooth serial port connection ###
@@ -208,9 +205,9 @@ def main():
     
     ### START Processes ###
     p1 = Process(target=led_main, args=(ser,))
-    p1.start()
     p2 = Process(target=det_main, args=(ser,))
     p2.start()
+    p1.start()
     p1.join()
     p2.join()
 

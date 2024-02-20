@@ -34,30 +34,28 @@ def led_main(ser): # 1 - red # 2 - green
     print(f'\nStarting LED signal module....')
 
     signal_in = '2'
-    signal = 2
+    signal = '2'
     
     while True:
         # LISTEN for signal from STM
-        if ser.inWaiting() > 0:
-            signal_in = ser.readline().decode().strip('\0')
-            print(f'\nLED: {signal}\n')
+        # if ser.inWaiting() > 0:
+        signal = ser.readline().decode().strip()
+        print(f'\nLED: {signal}\n')
             # if signal_in != signal:
             #     signal = signal_in
-            signal = int(signal_in)
         
         # UPDATE the LED lights
-        if(signal == 1):
+        if(signal == '1'):
             GREEN_LIGHT.off()
             YELLOW_LIGHT.on()
             time.sleep(2)
             YELLOW_LIGHT.off()
             RED_LIGHT.on()
-        elif(signal == 2):
-        # else:
-            # print(f'\nLED in Green\n')
+        # elif(signal == '2'):
+        else:
+            print(f'\nLED in Green\n')
             RED_LIGHT.off()
             GREEN_LIGHT.on()
-            
         # else:
         #     signal = '1'
         #     RED_LIGHT.off()
