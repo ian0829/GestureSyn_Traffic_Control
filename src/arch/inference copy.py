@@ -7,75 +7,74 @@
 # python3 real_time_with_labels.py --model mobilenet_v2.tflite --label coco_labels.txt
 # python3 real_time_with_labels.py --model ../src/pretrained/efficientdet_lite3.tflite --label coco_labels.txt
 # python3 inference.py --model ./pretrained/efficientdet_lite3.tflite --label coco_labels.txt
-# sudo rfcomm connect 1 00:21:06:BE:80:4D
 
-import cv2
+
+from gpiozero import LED
 import time
 import datetime
-import serial
-import argparse
-import numpy as np
-import tflite_runtime.interpreter as tflite
-from picamera2 import MappedArray, Picamera2, Preview
-from multiprocessing import Process
-
-normal_size = (640, 480)
-lowres_size = (320, 240)
-rectangles = []
-
-### MAIN CONTROLLER OF LED LIGHTS ###
-from gpiozero import LED
 
 RED_LIGHT = LED(17)
 YELLOW_LIGHT = LED(27)
 GREEN_LIGHT = LED(22)
 
-def led_main(ser): # 1 - red # 2 - green
-    # Initialize led module
+
+# 1 - red # 2 - green
+def led_main():
     print(f'\nStarting LED signal module....')
-    signal_in = '2'
-    signal = 2
     
-    while True:
-        # LISTEN for signal from STM
-        if ser.inWaiting() > 0:
-            signal_in = ser.readline().decode().strip('\0')
-            print(f'\nLED: {signal}\n')
+    signals  = ['1', '2', '1', '2', '1', '1', '2', '1']
+    
+    signal_in = '1'
+    x = 0
+    while x <= 7: #while True:
+        # signal = input('Which light? ')
+        # while ser.inWaiting() > 0:
+        #     signal_in = ser.readline().decode().strip()
             # if signal_in != signal:
             #     signal = signal_in
-            signal = int(signal_in)
         
-        # UPDATE the LED lights
-        if(signal == 1):
+        signal = signals[x]
+        if(signal == '1'):
             GREEN_LIGHT.off()
             YELLOW_LIGHT.on()
             time.sleep(2)
             YELLOW_LIGHT.off()
             RED_LIGHT.on()
-            signal = 3
-        elif(signal == 2):
-        # else:
-            # print(f'\nLED in Green\n')
+        elif(signal == '2'):
             RED_LIGHT.off()
             GREEN_LIGHT.on()
-            
-        # else:
-        #     signal = '1'
-        #     RED_LIGHT.off()
-        #     GREEN_LIGHT.off()  
-                # print(f'\nLED: {signal}\n')
+        else:
+            signal = '1'
+            RED_LIGHT.off()
+            GREEN_LIGHT.off()    
         
-  
-        
+        print(f'\nLED: {signal}\n')
+        time.sleep(2)
+        x += 1
+#########
+
+import time
+import datetime
+
+import cv2
+import numpy as np
+import argparse
+import tflite_runtime.interpreter as tflite
+from picamera2 import MappedArray, Picamera2, Preview
 
 
-### RELAY CAR count to STM module ###
+normal_size = (640, 480)
+lowres_size = (320, 240)
+rectangles = []
+
+### RELAY the CAR count to STM module ###
+import serial
 def sent_car_count(car_count, ser):  
-    msg_str = str(car_count)
-    bytes_sent = ser.write( msg_str.encode('utf-8') )
-    print(f'{car_count} : {bytes_sent}')
-
+    msg_str = str(car_count) + '\n'
+    # bytes_sent = ser.write( msg_str.encode('utf-8') )
     # print (f'Sended {bytes_sent} bytes')
+    ### DEBUG
+    print (f'\nCAR COUNT :    {msg_str}')
     
 
 def read_labels(file_path):
@@ -157,7 +156,7 @@ def inference_model(image, model, output, label=None):
                 rectangles[-1].append(labels[classId])
     return num_det_car
 
-def det_main(ser):
+def det_main():
     print(f'Starting detection module....')
     
     parser = argparse.ArgumentParser()
@@ -177,48 +176,61 @@ def det_main(ser):
         label_file = None
 
     picam2 = Picamera2()
-    # picam2.start_preview(Preview.QTGL)
-    picam2.start_preview(Preview.NULL)
+    picam2.start_preview(Preview.QTGL)
     config = picam2.create_preview_configuration(main={"size": normal_size},
                                                  lores={"size": lowres_size, "format": "YUV420"})
     picam2.configure(config)
 
     stride = picam2.stream_configuration("lores")["stride"]
-    # picam2.post_callback = DrawRectangles
+    picam2.post_callback = DrawRectangles
 
     picam2.start()
+    
+    ### establish bluetooth serial port connection
+    # ser = serial.Serial('/dev/rfcomm1', 9600) 
+    ###DEBUG
+    ser = ''
+    
     
     start_time = datetime.datetime.now()
     while True:
         buffer = picam2.capture_buffer("lores")
         grey = buffer[:stride * lowres_size[1]].reshape((lowres_size[1], stride))
+        num_det_car = inference_model(grey, args.model, output_file, label_file)
         
-
-        # print (f'\nCAR COUNT :    {num_det_car}')
-        
-        # SEND the number of car count every three seconds
+        # Send the number of car count every three seconds
+        # if (signal == '1' and ((datetime.datetime.now() - start_time).seconds == 3)) :
         if (datetime.datetime.now() - start_time).seconds == 3 :
-            # GET the current number of cars
-            num_det_car = inference_model(grey, args.model, output_file, label_file)
             start_time = datetime.datetime.now()
             sent_car_count(num_det_car, ser)    
 
+
+
+# import logging
+# import concurrent.futures
+from multiprocessing import Process
 def main():
-    ### ESTABLISH bluetooth serial port connection ###
-    ser = serial.Serial('/dev/rfcomm1', 9600) 
-    # ser = ''
-    
-    ### START Processes ###
-    p1 = Process(target=led_main, args=(ser,))
+    p1 = Process(target=led_main) #, args=(queue,))
     p1.start()
-    p2 = Process(target=det_main, args=(ser,))
+    p2 = Process(target=det_main) #, args=(queue,))
     p2.start()
     p1.join()
     p2.join()
+    # format = "%(asctime)s: %(message)s"
+    # logging.basicConfig(format=format, level=logging.INFO,
+    #                     datefmt="%H:%M:%S")
+    
+    # with concurrent.futures.ProcessPoolExecutor(max_workers=2) as exe:
+    #     det_future = exe.submit( det_main )
+    #     led_future = exe.submit( led_main )
+    
+    # # det_main()
+    
+    # if led_future.cancel():
+	#     print('Task LED was cancelled')
 
 
 if __name__ == '__main__':
     main()
-
     # det_main()
     # led_main()

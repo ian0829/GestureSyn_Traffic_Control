@@ -52,6 +52,7 @@ def led_main(ser): # 1 - red # 2 - green
             time.sleep(2)
             YELLOW_LIGHT.off()
             RED_LIGHT.on()
+            signal = 3
         elif(signal == 2):
         # else:
             # print(f'\nLED in Green\n')
@@ -176,13 +177,14 @@ def det_main(ser):
         label_file = None
 
     picam2 = Picamera2()
-    picam2.start_preview(Preview.QTGL)
+    # picam2.start_preview(Preview.QTGL)
+    picam2.start_preview(Preview.NULL)
     config = picam2.create_preview_configuration(main={"size": normal_size},
                                                  lores={"size": lowres_size, "format": "YUV420"})
     picam2.configure(config)
 
     stride = picam2.stream_configuration("lores")["stride"]
-    picam2.post_callback = DrawRectangles
+    # picam2.post_callback = DrawRectangles
 
     picam2.start()
     

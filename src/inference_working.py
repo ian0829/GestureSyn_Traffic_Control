@@ -31,8 +31,8 @@ YELLOW_LIGHT = LED(27)
 GREEN_LIGHT = LED(22)
 
 def led_main(ser): # 1 - red # 2 - green
-    # Initialize led module
     print(f'\nStarting LED signal module....')
+
     signal_in = '2'
     signal = 2
     
@@ -145,15 +145,15 @@ def inference_model(image, model, output, label=None):
         classId = int(detected_classes[0][i])
         score = detected_scores[0][i]
         if score > 0.3:
-            if labels[classId] == 'car':
+            if labels[classId] in ['car', 'truck']:
                 num_det_car += 1
-            xmin = left * initial_w
-            ymin = bottom * initial_h
-            xmax = right * initial_w
-            ymax = top * initial_h
-            box = [xmin, ymin, xmax, ymax]
-            rectangles.append(box)
-            if labels:
+                xmin = left * initial_w
+                ymin = bottom * initial_h
+                xmax = right * initial_w
+                ymax = top * initial_h
+                box = [xmin, ymin, xmax, ymax]
+                rectangles.append(box)
+            if labels and len(rectangles) > 0:
                 rectangles[-1].append(labels[classId])
     return num_det_car
 
@@ -177,14 +177,13 @@ def det_main(ser):
         label_file = None
 
     picam2 = Picamera2()
-    # picam2.start_preview(Preview.QTGL)
-    picam2.start_preview(Preview.NULL)
+    picam2.start_preview(Preview.QTGL)
     config = picam2.create_preview_configuration(main={"size": normal_size},
                                                  lores={"size": lowres_size, "format": "YUV420"})
     picam2.configure(config)
 
     stride = picam2.stream_configuration("lores")["stride"]
-    # picam2.post_callback = DrawRectangles
+    picam2.post_callback = DrawRectangles
 
     picam2.start()
     
