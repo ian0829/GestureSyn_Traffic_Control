@@ -11,4 +11,3 @@ while True:
     time.sleep(2)
     RED_LIGHT.off()
     time.sleep(2)
-        
