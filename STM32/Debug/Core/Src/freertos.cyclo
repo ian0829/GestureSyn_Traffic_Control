@@ -1,0 +1,8 @@
+../Core/Src/freertos.c:86:6:vApplicationGetIdleTaskMemory	1
+../Core/Src/freertos.c:100:6:MX_FREERTOS_Init	1
+../Core/Src/freertos.c:159:6:StartMPU6050Task	1
+../Core/Src/freertos.c:195:6:StartLcdTask	1
+../Core/Src/freertos.c:231:6:StartSwitchTask	3
+../Core/Src/freertos.c:265:6:StartTrafficTask	1
+../Core/Src/freertos.c:294:6:StartRecieveTask	2
+../Core/Src/freertos.c:322:6:StartIWDG_Monitor	2

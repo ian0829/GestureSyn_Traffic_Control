@@ -1,0 +1,2 @@
+../Core/Src/CalculateAngle.c:9:6:CalculateAccMPU6050	32	static
+../Core/Src/CalculateAngle.c:26:6:CalculateCompliFilter	32	static

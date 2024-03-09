@@ -52,7 +52,7 @@ pip3 install numpy
 
 Go into the source code directory:
 ```
-cd src
+cd rpi4/src
 ```
 Option 1: Run the car detection program (with video stream displayed)
 ```
