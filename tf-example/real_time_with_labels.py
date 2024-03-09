@@ -6,7 +6,7 @@
 
 # A TensorFlow Lite example for Picamera2 on Raspberry Pi OS Bullseye
 #
-# Install necessary dependences before starting,
+# Install necessary dependencies before starting,
 #
 # $ sudo apt update
 # $ sudo apt install build-essential
